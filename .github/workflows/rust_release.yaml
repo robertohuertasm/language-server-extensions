@@ -1,0 +1,63 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    
+defaults:
+  run: 
+    working-directory: language-server
+
+jobs:
+  release:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        rust: [stable]
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            rust: stable
+            artifact_name: language-server
+            asset_name: language_server_linux.zip
+          - os: macOS-latest
+            rust: stable
+            artifact_name: language-server
+            asset_name: language_server_osx.zip
+          - os: windows-latest
+            rust: stable
+            artifact_name: language-server.exe
+            asset_name: language_server_windows.zip
+    steps:
+      - name: Setup Rust
+        uses: hecrj/setup-rust-action@master
+        with:
+          rust-version: stable
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build the crate for release
+        shell: bash
+        run: |
+          cargo build --release
+          ls -la target/release
+      - name: Zip the artifact
+        shell: bash
+        run: |
+          echo "Setting exec permissions"
+          chmod +x ./target/release/${{ matrix.artifact_name }}
+          echo "Zipping"
+          if [[ "${{matrix.os}}" == "macOS-latest" ]]
+          then
+            zip ${{matrix.asset_name}} target/release/${{matrix.artifact_name}}
+          else
+            7z a ${{matrix.asset_name}} target/release/${{matrix.artifact_name}}
+          fi
+      - name: Upload binaries to GitHub release
+        uses: svenstaro/upload-release-action@v1-release
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: language-server/${{ matrix.asset_name }}
+          asset_name: ${{ matrix.asset_name }}
+          tag: ${{ github.ref }}

@@ -1,0 +1,22 @@
+@host = localhost:3000 
+
+
+### hello world
+GET / HTTP/1.1
+Host: {{host}}
+
+### info
+GET /info HTTP/1.1
+Host: {{host}}
+
+### warn
+GET /warn HTTP/1.1
+Host: {{host}}
+
+### error
+GET /error HTTP/1.1
+Host: {{host}}
+
+### debug
+GET /debug HTTP/1.1
+Host: {{host}}
